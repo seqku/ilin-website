@@ -2,26 +2,201 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+html,
+body,
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+body::-webkit-scrollbar {
+  display: none
+}
+
+canvas {
+  width: 100vw;
+  height: 100vh;
+}
+
+.progress-bar {
+  transform-origin: 0%;
+}
+
+.scroll-section-outer {
+  overflow: hidden;
+}
+
+.scroll-section-inner {
+  height: 100vh;
+  width: 400vw;
+  display: flex;
+  flex-direction: row;
+  position: relative;
+}
+
+.scroll-section {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+}
+.scroll-section-about {
+  height: 100vh;
+  width: 90vw;
+  display: flex;
+}
+
+.scroll-section-roster {
+  height: 100vh;
+  width: 70vw;
+  display: flex;
+}
+
+
+.scroll-sidebar {
+  overflow-x: scroll;
+}
+::-webkit-scrollbar-x {
+  width: 8px; /* Ширина полосы прокрутки */
+  
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(129, 129, 129); /* Цвет ползунка */
+}
+
+/* Стиль для ползунка при наведении */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Цвет ползунка при наведении */
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Цвет фона трека */
+}
+@font-face {
+  font-family: helvetica;
+  src: url(../public/fonts/Helvetica\ Now\ Display\ Bold.woff2);
+}
+@font-face {
+  font-family: strelka;
+  src: url(../public/fonts/StrelkaUltra.otf);
+}
+
+@font-face {
+  font-family: allerta;
+  src: url(../public/fonts/Allerta-Regular.ttf);
+}
+
+@font-face {
+  font-family: galder;
+  src: url(../public/fonts/GalderGlynn.ttf);
+}
+
+.helvetica {
+  font-family: helvetica;
+}
+
+.galder {
+  font-family: galder;
+}
+
+.allerta {
+  font-family: allerta;
+}
+
+
+.strelka {
+  font-family: strelka;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+::selection {
+  color: rgb(128, 128, 128); 
+}
+
+.none-pointer {
+  pointer-events: none;
+}
+
+.loader {
+  animation: fade-in 2s ease 1s forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100vw); /* Начинаем справа за экраном */
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0); /* Перемещаемся в начальное положение */
+    opacity: 1;
+  }
+}
+
+.scrollBar_arrow {
+  display: none
+}
+
+@media(min-width: 640px) {
+  .scrollBar_arrow {
+      display:flex;
+      column-gap: 5px;
+      transition-property: opacity;
+      transition-duration: .3s;
+      transition-timing-function: cubic-bezier(0.3, 0.1, 0.1, 1)
+  }
+}
+
+.scrollBar_arrow .arrow {
+  color: red;
+  font-size: 90px;
+  animation-name: arrow-attention;
+  animation-duration: 1.8s;
+  animation-iteration-count: infinite;
+  animation-play-state: running
+}
+
+.scrollBar.scrolling .scrollBar_arrow {
+  opacity: 0
+}
+
+@keyframes arrow-attention {
+  0% {
+      opacity: 0;
+      transform: translate3d(-50%, 0, 0);
+      transition-timing-function: cubic-bezier(0.1, 0.4, 0.2, 1)
+  }
+
+  25% {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+      transition-timing-function: cubic-bezier(0.1, 0.4, 0.2, 1)
+  }
+
+  60% {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+      transition-timing-function: cubic-bezier(0.1, 0.4, 0.2, 1)
+  }
+
+  100% {
+      opacity: 0;
+      transform: translate3d(100%, 0, 0);
+      transition-timing-function: cubic-bezier(0.4, 0.1, 0.2, 1)
+  }
+}
+
+@media (max-width: 640px) {
+  .scroll-section-inner {
+    flex-direction: column; /* Изменение направления флекс-контейнера на вертикальное */
+    /* Дополнительные стили, если необходимо */
+  }
+
+  /* Добавьте дополнительные стили для других элементов, если необходимо */
 }
