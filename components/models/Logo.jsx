@@ -13,9 +13,7 @@ export function Logo({ mousePosition, ...props }) {
             const targetRotationY = mousePosition.x * Math.PI * sensitivity;
             const targetRotationX = mousePosition.y * Math.PI * sensitivity;
 
-            const lerpFactor = 0.05; // Коэффициент интерполяции для плавности
-
-            // Плавно обновляем вращение
+            const lerpFactor = 0.05; 
             setRotation(prevRotation => ({
                 x: prevRotation.x + (targetRotationX - prevRotation.x) * lerpFactor,
                 y: prevRotation.y + (targetRotationY - prevRotation.y) * lerpFactor,

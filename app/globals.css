@@ -7,69 +7,45 @@ body,
 * {
   padding: 0;
   margin: 0;
-  box-sizing: border-box;
+}
+
+.opacityan {
+  opacity: 0;
+  touch-action: none;
+  animation: fade-in 2s ease 1s forwards;
+}
+
+canvas {
+  opacity: 0;
+  touch-action: none;
+  animation: fade-in 2s ease 1s forwards;
 }
 
 body::-webkit-scrollbar {
   display: none
 }
 
-canvas {
-  width: 100vw;
-  height: 100vh;
-}
-
 .progress-bar {
   transform-origin: 0%;
 }
 
-.scroll-section-outer {
-  overflow: hidden;
-}
-
-.scroll-section-inner {
-  height: 100vh;
-  width: 400vw;
-  display: flex;
-  flex-direction: row;
-  position: relative;
-}
-
-.scroll-section {
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-}
-.scroll-section-about {
-  height: 100vh;
-  width: 90vw;
-  display: flex;
-}
-
-.scroll-section-roster {
-  height: 100vh;
-  width: 70vw;
-  display: flex;
-}
-
-
 .scroll-sidebar {
   overflow-x: scroll;
 }
+
 ::-webkit-scrollbar-x {
-  width: 8px; /* Ширина полосы прокрутки */
+  width: 8px; 
   
 }
 ::-webkit-scrollbar-thumb {
-  background: rgb(129, 129, 129); /* Цвет ползунка */
+  background: rgb(129, 129, 129); 
 }
 
-/* Стиль для ползунка при наведении */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555; /* Цвет ползунка при наведении */
+  background: #555; 
 }
 ::-webkit-scrollbar-track {
-  background: #f1f1f1; /* Цвет фона трека */
+  background: #f1f1f1; 
 }
 @font-face {
   font-family: helvetica;
@@ -88,6 +64,23 @@ canvas {
 @font-face {
   font-family: galder;
   src: url(../public/fonts/GalderGlynn.ttf);
+}
+
+@font-face {
+  font-family: galderbold;
+  src: url(../public/fonts/Galderglynn1884-Bold.ttf);
+}
+
+@font-face {
+  font-family: galderregular;
+  src: url(../public/fonts/Galderglynn-Regular.ttf);
+}
+.galderregular {
+  font-family: galderregular;
+}
+
+.galderbold {
+  font-family: galderbold;
 }
 
 .helvetica {
@@ -117,7 +110,7 @@ canvas {
 }
 
 ::selection {
-  color: rgb(128, 128, 128); 
+  color: black; 
 }
 
 .none-pointer {
@@ -130,11 +123,11 @@ canvas {
 
 @keyframes slideIn {
   from {
-    transform: translateX(100vw); /* Начинаем справа за экраном */
+    transform: translateX(100vw); 
     opacity: 0;
   }
   to {
-    transform: translateX(0); /* Перемещаемся в начальное положение */
+    transform: translateX(0);
     opacity: 1;
   }
 }
@@ -192,11 +185,26 @@ canvas {
   }
 }
 
-@media (max-width: 640px) {
-  .scroll-section-inner {
-    flex-direction: column; /* Изменение направления флекс-контейнера на вертикальное */
-    /* Дополнительные стили, если необходимо */
-  }
+.container {
+  width: 600vw;
+  height: 100vh;
+  display: flex;
+  flex-wrap: wrap;
+}
 
-  /* Добавьте дополнительные стили для других элементов, если необходимо */
+.panel {
+  width: 100vw;
+  height: 100vh;
+}
+
+.custom-canvas {
+  width: 945px;
+  height: 945px;
+}
+
+@media screen and (max-width: 600px) {
+  .custom-canvas {
+    width: 300px; /* Установите размер для мобильных устройств */
+    height: 300px; /* Установите размер для мобильных устройств */
+  }
 }

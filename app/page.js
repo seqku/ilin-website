@@ -1,19 +1,29 @@
 'use client'
 import Splash from "@/components/splash screen/Splash";
 import { useEffect , useState } from "react";
-import { Canvas } from '@react-three/fiber';
-import { Logo } from "@/components/models/Logo";
-import { Environment } from "@react-three/drei";
-import SideBar from "@/components/bars/SideBar";
 import { motion, useScroll } from "framer-motion";
-import ScrollSection from "@/components/sections/ScrollSection";
-
-
+import HorizontalScroll from "@/components/sections/ScrollSection";
 
 
 export default function Home() {
 
   const { scrollYProgress } = useScroll();
+  const [arrowHidden, setArrowHidden] = useState(false);
+
+   useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setArrowHidden(true);
+      } else {
+        setArrowHidden(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
     useEffect(() => {
       const preventZoom = e => {
@@ -33,14 +43,12 @@ export default function Home() {
 
 
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
     const handleMouseMove = (event) => {
         setMousePosition({
             x: (event.clientX / window.innerWidth) * 2 - 1,
             y: - (event.clientY / window.innerHeight) * 2 + 1
         });
     };
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,30 +56,25 @@ export default function Home() {
       setLoading(false);
     }, 4000);
   }, []);
-
-
+  
   return (
     <div>
       {loading ? (
         <Splash />
       ) : (
         <>
-        <Canvas id="Background" style={{ position: 'fixed', backgroundColor: '#003C47', touchAction: 'none' }} onMouseMove={handleMouseMove} gl={{ preserveDrawingBuffer: true }} shadows dpr={[1, 1.5]} camera={{ position: [0, 0, 9], fov: 50 , zoom: 1 }} onWheel={e => e.preventDefault()}>
-        <ambientLight intensity={2} />
-        <pointLight position={[0, 10, 10]} color="#fff" intensity={1} />
-        <Environment preset="city" />
-        <Logo mousePosition={mousePosition} rotation={[0.3, Math.PI / 1.6, 0]} /> 
-        </Canvas>
-          <SideBar />
-          
         <div className="flex flex-col fixed z-20 bottom-[20px] right-[20px]">
         <div className="scrollBar_arrow">
-        <div className="arrow">
+        <motion.div 
+        className={`arrow ${arrowHidden ? 'hidden' : ''}`}
+        animate={{ opacity: arrowHidden ? 0 : 1 }}
+        transition={{ duration: 1 }}
+        >
         →
-        </div>
+        </motion.div>
         </div>
         
-        <div className=" w-[160px] h-[12px] border-white border-[1px]">
+        <div className="hidden md:block w-[160px] h-[12px] border-white border-[1px]">
         <motion.div
         className="progress-bar w-full h-full bg-[#B32322]"
         style={{ scaleX: scrollYProgress }}
@@ -79,8 +82,8 @@ export default function Home() {
         </div>
         </div>
         
-        <main className="none-pointer relative z-[10]">
-        <ScrollSection />
+        <main  className="md:pointer-events-none pointer-events-auto z-[10]">
+        <HorizontalScroll />
         </main>
         </>
     )}

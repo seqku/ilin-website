@@ -1,87 +1,345 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState, useLayoutEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { Ilin } from "../content/Ilin";
 import Roster from "../content/Roster";
+import { Canvas } from '@react-three/fiber';
+import { Logo } from "@/components/models/Logo";
+import { Environment } from "@react-three/drei";
+import { AnimatePresence, motion } from 'framer-motion';
 
+gsap.registerPlugin(ScrollTrigger);
 
 function ScrollSection() {
-  const sectionRef = useRef(null);
-  const triggerRef = useRef(null);
-
-  gsap.registerPlugin(ScrollTrigger);
 
   useEffect(() => {
-    const pin = gsap.fromTo(
-      sectionRef.current,
+    const preventZoom = e => {
+      if (e.ctrlKey || e.touches?.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('wheel', preventZoom, { passive: false });
+    document.addEventListener('touchmove', preventZoom, { passive: false });
+
+    return () => {
+      document.removeEventListener('wheel', preventZoom);
+      document.removeEventListener('touchmove', preventZoom);
+    };
+  }, []);
+
+const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (event) => {
+      setMousePosition({
+          x: (event.clientX / window.innerWidth) * 2 - 1,
+          y: - (event.clientY / window.innerHeight) * 2 + 1
+      });
+  };
+
+  const MainRef = useRef(null);
+  const aboutRef = useRef(null);
+  const rosterRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  const [MainContentWidth, setMainContentWidth] = useState(0);
+  const [endTrigger, setEndTrigger] = useState("3500 top");
+
+  useEffect(() => {
+    window.scrollTo(0, 20);
+  }, []);
+
+  useLayoutEffect(() => {
+    const updateMainContentWidth = () => {
+      const offsetWidth = MainRef.current.offsetWidth;
+      setMainContentWidth(offsetWidth);
+    };
+
+    const updateEndTrigger = () => {
+      const screenWidth = window.innerWidth;
+     if (screenWidth < 768) {
+      gsap.killTweensOf(MainRef.current);
+     } else if (screenWidth < 1026) {
+        setEndTrigger("6700 top");
+      } else if (screenWidth < 1250) {
+        setEndTrigger("4250 top");
+      } else if (screenWidth < 1500) {
+        setEndTrigger("4000 top");
+      } else {
+        setEndTrigger("3500 top");
+      }
+    };
+
+    const MainPin = gsap.fromTo(
+      MainRef.current,
       {
         translateX: 0,
       },
       {
-        translateX: "-300vw",
+        translateX: `-${MainContentWidth}px`,
         ease: "none",
         duration: 1,
         scrollTrigger: {
           trigger: triggerRef.current,
           start: "top top",
-          end: "2000 top",
-          scrub: 0.6,
+          end: endTrigger,
+          scrub: 1,
           pin: true,
         },
       }
     );
+    updateMainContentWidth();
+    updateEndTrigger();
+    window.addEventListener("resize", () => {
+      updateMainContentWidth();
+      updateEndTrigger();
+    });
+
     return () => {
-
-      pin.kill();
+      MainPin.kill();
+      window.removeEventListener("resize", () => {
+        updateMainContentWidth();
+        updateEndTrigger();
+      });
     };
-  }, []);
+  }, [MainContentWidth, endTrigger]);
 
+  const [isLinksVisible, setIsLinksVisible] = useState(false);
+  const [links, setLinks] = useState([]);
+
+  const toggleLinks = () => {
+    if (!isLinksVisible) {
+      setLinks([]); 
+    } else {
+        setLinks([]); 
+    }
+    setIsLinksVisible(!isLinksVisible);
+};
+  useEffect(() => {
+    if (!isLinksVisible) {
+      setLinks([]);
+    }
+  }, [isLinksVisible]);
+
+  const linkVariants = {
+    hidden: { opacity: 0, x: 50 },
+    visible: i => ({
+      opacity: 1,
+      x: 0,
+      transition: { delay: i * 0.2 }
+    }),
+    exit: { opacity: 0, x: 20, transition: { duration: 0.3 } }
+  };
+
+  const AboutLinkClick = () => {
+    const aboutOffset = window.innerWidth < 1025 ? 1060 : 900;
+    gsap.to(MainRef.current, {
+      ease: "power3",
+      duration: 0,
+      onComplete: () => {
+        window.scroll({
+          top: aboutOffset,
+          left: 0,
+          behavior: "smooth",
+        });
+      },
+    });
+  };
+
+  const RosterLinkClick = () => {
+    const rosterOffset = window.innerWidth < 1025 ? 2750 : 1700;
+    gsap.to(MainRef.current, {
+      ease: "power3",
+      duration: 0,
+      onComplete: () => {
+        window.scroll({
+          top: rosterOffset,
+          left: 0,
+          behavior: "smooth",
+        });
+      },
+    });
+  };
+
+  const FooterLinkClick = () => {
+    const footerOffset = window.innerWidth < 1025 ? 4800 : 2500;
+    gsap.to(MainRef.current, {
+      ease: "power3",
+      duration: 0,
+      onComplete: () => {
+        window.scroll({
+          top: footerOffset,
+          left: 0,
+          behavior: "smooth",
+        });
+      },
+    });
+  };
+
+  const handleAboutButtonClick = () => {
+    if (window.innerWidth < 768) {
+      MobileAboutLinkClick();
+    } else {
+      AboutLinkClick();
+    }
+  };
+
+  const handleRosterButtonClick = () => {
+    if (window.innerWidth < 768) {
+      MobileRosterLinkClick();
+    } else {
+      RosterLinkClick();
+    }
+  };
+
+  const handleFooterButtonClick = () => {
+    if (window.innerWidth < 768) {
+      MobileFooterLinkClick();
+    } else {
+      FooterLinkClick();
+    }
+  };
+
+  const MobileAboutLinkClick = () => {
+    const aboutSection = document.getElementById('about'); // Замените 'about' на id вашей секции
+    if (aboutSection) {
+      aboutSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+  
+  const MobileRosterLinkClick = () => {
+    const rosterSection = document.getElementById('roster'); // Замените 'roster' на id вашей секции
+    if (rosterSection) {
+      rosterSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+  
+  const MobileFooterLinkClick = () => {
+    const footerSection = document.getElementById('footer'); // Замените 'footer' на id вашей секции
+    if (footerSection) {
+      footerSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  
   return (
-    <section className="scroll-section-outer">
       <div ref={triggerRef}>
-        <div ref={sectionRef} className="scroll-section-inner">
-          <div className="scroll-section flex justify-end">            
-          </div>
+        <div className="pointer-events-auto">
+        <header className="md:border-r-[2px] border-white opacityan md:h-screen bg-[#003C47] md:w-[70px] h-[70px] w-screen border-b-[2px] md:border-b-0 fixed md:left-0 top-0 z-20">
+            <h1 className="absolute md:top-1/3 md:left-4 top-6 left-[10px]">          
+            <svg className="block md:hidden" width="235" height="34" viewBox="0 0 235 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15.704 0.799998V7.46H12.248V19.34H15.704V26H0.548L0.548 19.34H3.968V7.46H0.548V0.799998H15.704ZM27.5781 0.799998V18.584H36.7221V26H19.2981V0.799998H27.5781ZM54.1298 0.799998V7.46H50.6738V19.34H54.1298V26H38.9738V19.34H42.3938V7.46H38.9738V0.799998H54.1298ZM72.6279 11.96V0.799998H80.9079V26H79.1799L66.0039 15.668V26H57.7239V0.799998H59.4159L72.6279 11.96ZM100.469 7.208C106.085 7.208 109.469 10.88 109.361 17.216C109.361 17.684 109.325 18.152 109.289 18.62H97.4448C98.0928 20.24 99.4608 21.032 101.585 21.032C104.105 21.032 106.301 20.636 108.173 19.844L108.137 24.884C107.453 25.244 106.373 25.604 104.969 25.928C103.565 26.252 102.161 26.432 100.721 26.432C97.5168 26.432 95.0328 25.532 93.1968 23.696C91.3968 21.86 90.4968 19.52 90.4968 16.676C90.4968 13.832 91.3968 11.564 93.1608 9.836C94.9608 8.072 97.4088 7.208 100.469 7.208ZM100.325 12.536C98.5608 12.536 97.5528 13.4 97.2288 15.164H102.917C102.665 13.4 101.801 12.536 100.325 12.536ZM121.467 26.432C119.991 26.432 118.407 26.288 116.679 25.964C114.951 25.64 113.511 25.208 112.359 24.74L111.387 17.54L111.495 17.468C112.791 18.152 114.375 18.692 116.211 19.124C118.047 19.52 119.703 19.736 121.143 19.736C123.195 19.736 124.203 19.268 124.203 18.368C124.203 17.756 123.771 17.324 122.871 17.072L116.859 15.56C113.511 14.588 111.603 11.78 111.603 8.432C111.603 5.984 112.575 4.04 114.483 2.564C116.391 1.088 118.983 0.368 122.259 0.368C123.807 0.368 125.391 0.512 126.975 0.835998C128.595 1.16 129.783 1.556 130.611 2.024V8.9C129.639 8.288 128.379 7.82 126.831 7.46C125.283 7.064 123.879 6.884 122.583 6.884C120.675 6.884 119.739 7.352 119.739 8.288C119.739 9.044 120.243 9.548 121.287 9.836L126.723 11.42C130.215 12.32 132.339 14.984 132.339 18.332C132.339 20.744 131.331 22.724 129.351 24.2C127.371 25.676 124.743 26.432 121.467 26.432ZM148.13 7.208C150.29 7.208 152.126 8.072 153.638 9.836C155.186 11.564 155.942 13.832 155.942 16.676C155.942 19.556 155.15 21.896 153.566 23.732C152.018 25.532 150.074 26.432 147.734 26.432C145.682 26.432 143.99 25.748 142.658 24.344V33.02H134.918V7.64H141.974L142.298 10.7C143.486 8.684 145.502 7.208 148.13 7.208ZM145.574 20.132C147.446 20.132 148.634 18.692 148.634 16.82C148.634 14.948 147.446 13.508 145.466 13.508C144.566 13.508 143.63 13.796 142.694 14.408V19.088C143.594 19.772 144.53 20.132 145.574 20.132ZM168.084 26.432C165.168 26.432 162.684 25.532 160.668 23.768C158.688 22.004 157.68 19.7 157.68 16.856C157.68 14.012 158.688 11.672 160.668 9.908C162.684 8.108 165.168 7.208 168.084 7.208C171.036 7.208 173.52 8.108 175.5 9.908C177.516 11.672 178.524 14.012 178.524 16.856C178.524 19.7 177.516 22.004 175.5 23.768C173.52 25.532 171.036 26.432 168.084 26.432ZM168.084 19.952C169.92 19.952 171.18 18.728 171.18 16.856C171.18 14.948 169.92 13.688 168.084 13.688C166.32 13.688 164.988 14.948 164.988 16.856C164.988 18.692 166.32 19.952 168.084 19.952ZM194.724 7.208C195.372 7.208 195.876 7.316 196.272 7.532V15.596C195.804 15.488 195.264 15.416 194.652 15.416C191.952 15.416 190.008 16.208 188.748 17.756V26H181.008V7.64H188.748V13.832C189.648 11.96 190.62 10.376 191.7 9.116C192.816 7.856 193.824 7.208 194.724 7.208ZM212.446 19.952C213.958 19.952 215.218 19.772 216.262 19.376V25.496C215.794 25.748 214.93 25.964 213.706 26.144C212.518 26.324 211.402 26.432 210.394 26.432C207.37 26.432 205.066 25.424 203.806 24.092C203.194 23.408 202.726 22.616 202.33 21.68C201.574 19.808 201.43 18.368 201.43 16.604V13.436H197.29V7.676H201.43V2.456L209.206 0.872V7.64H216.01L213.922 13.436H209.206V16.64C209.206 18.836 210.286 19.952 212.446 19.952ZM226.044 26.432C223.056 26.432 220.572 25.928 218.628 24.884L217.836 18.98L217.98 18.908C220.176 20.492 222.588 21.284 225.216 21.284C226.26 21.284 226.764 21.068 226.764 20.636C226.764 20.312 226.476 20.024 225.864 19.844L222.084 18.728C220.536 18.26 219.456 17.468 218.844 16.388C218.232 15.308 217.908 14.228 217.908 13.184C217.908 9.404 221.292 7.208 226.512 7.208C229.068 7.208 231.228 7.604 232.92 8.36V13.616C231.372 12.788 229.5 12.392 227.304 12.392C225.9 12.392 225.216 12.644 225.216 13.112C225.216 13.436 225.432 13.688 225.9 13.868L229.824 15.128C232.668 16.1 234.072 17.936 234.072 20.672C234.072 24.452 231.048 26.432 226.044 26.432Z" fill="white"/>
+            </svg>             
+            <svg className="hidden md:block" width="34" height="235" viewBox="0 0 34 235" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0.808838 219.298L7.46884 219.297L7.46898 222.753L19.349 222.753L19.3488 219.297L26.0088 219.296L26.0095 234.452L19.3495 234.453L19.3493 231.033L7.46932 231.033L7.46946 234.453L0.809457 234.454L0.808838 219.298ZM0.808353 207.423L18.5924 207.423L18.592 198.279L26.008 198.278L26.0087 215.702L0.808691 215.703L0.808353 207.423ZM0.807268 180.872L7.46727 180.871L7.46741 184.327L19.3474 184.327L19.3473 180.871L26.0073 180.871L26.0079 196.027L19.3479 196.027L19.3477 192.607L7.46775 192.607L7.46789 196.027L0.807887 196.028L0.807268 180.872ZM11.9665 162.373L0.806513 162.374L0.806175 154.094L26.0062 154.093L26.0062 155.821L15.6748 168.997L26.0068 168.997L26.0071 177.277L0.807122 177.278L0.807053 175.586L11.9665 162.373ZM7.21338 134.532C7.21315 128.916 10.885 125.532 17.221 125.64C17.689 125.64 18.157 125.676 18.625 125.712L18.6255 137.556C20.2455 136.908 21.0374 135.54 21.0373 133.416C21.0372 130.896 20.6411 128.7 19.8491 126.828L24.8891 126.864C25.2491 127.548 25.6091 128.628 25.9332 130.032C26.2573 131.436 26.4373 132.84 26.4374 134.28C26.4375 137.484 25.5376 139.968 23.7017 141.804C21.8657 143.604 19.5258 144.504 16.6818 144.504C13.8378 144.504 11.5697 143.604 9.84168 141.84C8.0776 140.04 7.2135 137.592 7.21338 134.532ZM12.5414 134.676C12.5415 136.44 13.4055 137.448 15.1695 137.772L15.1693 132.084C13.4053 132.336 12.5413 133.2 12.5414 134.676ZM26.4365 113.533C26.4366 115.009 26.2926 116.593 25.9687 118.321C25.6448 120.049 25.2128 121.489 24.7449 122.641L17.5449 123.614L17.4729 123.506C18.1569 122.21 18.6968 120.626 19.1287 118.79C19.5247 116.954 19.7406 115.298 19.7405 113.858C19.7404 111.806 19.2724 110.798 18.3724 110.798C17.7604 110.798 17.3284 111.23 17.0765 112.13L15.5647 118.142C14.5928 121.49 11.7849 123.398 8.43692 123.398C5.98892 123.398 4.04488 122.426 2.5688 120.518C1.09273 118.61 0.372621 116.018 0.372487 112.742C0.372424 111.194 0.51636 109.61 0.840293 108.026C1.16423 106.406 1.56018 105.218 2.02815 104.39L8.90415 104.39C8.29219 105.362 7.82424 106.622 7.4643 108.17C7.06836 109.718 6.88842 111.122 6.88847 112.418C6.88855 114.326 7.35659 115.262 8.29259 115.262C9.04859 115.262 9.55257 114.758 9.84053 113.714L11.4243 108.278C12.3242 104.786 14.9881 102.662 18.3361 102.662C20.7481 102.661 22.7281 103.669 24.2042 105.649C25.6803 107.629 26.4364 110.257 26.4365 113.533ZM7.21143 86.8715C7.21134 84.7115 8.07527 82.8755 9.83921 81.3634C11.5671 79.8154 13.8351 79.0593 16.6791 79.0591C19.5591 79.059 21.8991 79.8509 23.7352 81.4349C25.5353 82.9828 26.4354 84.9267 26.4354 87.2667C26.4355 89.3187 25.7516 91.0108 24.3477 92.3428L33.0237 92.3425L33.024 100.082L7.64397 100.084L7.64368 93.0275L10.7037 92.7034C8.68762 91.5155 7.21154 89.4995 7.21143 86.8715ZM20.1355 89.427C20.1355 87.555 18.6954 86.3671 16.8234 86.3671C14.9514 86.3672 13.5115 87.5553 13.5115 89.5353C13.5116 90.4353 13.7996 91.3713 14.4117 92.3072L19.0917 92.307C19.7756 91.407 20.1356 90.471 20.1355 89.427ZM26.4346 66.9169C26.4347 69.8329 25.5348 72.3169 23.7709 74.333C22.007 76.3131 19.703 77.3212 16.859 77.3213C14.015 77.3214 11.675 76.3135 9.91092 74.3336C8.11084 72.3177 7.21074 69.8337 7.21062 66.9177C7.2105 63.9657 8.11039 61.4817 9.91031 59.5016C11.6742 57.4855 14.0142 56.4774 16.8582 56.4773C19.7022 56.4772 22.0062 57.4851 23.7703 59.501C25.5344 61.4809 26.4345 63.9649 26.4346 66.9169ZM19.9546 66.9172C19.9545 65.0812 18.7305 63.8212 16.8585 63.8213C14.9505 63.8214 13.6905 65.0814 13.6906 66.9174C13.6907 68.6814 14.9507 70.0134 16.8587 70.0133C18.6947 70.0132 19.9547 68.6812 19.9546 66.9172ZM7.20953 40.2777C7.2095 39.6297 7.31748 39.1257 7.53346 38.7297L15.5975 38.7293C15.4895 39.1973 15.4175 39.7374 15.4175 40.3494C15.4176 43.0494 16.2097 44.9933 17.7578 46.2533L26.0018 46.2529L26.0021 53.9929L7.64209 53.9937L7.64177 46.2537L13.8338 46.2534C11.9617 45.3535 10.3777 44.3816 9.11765 43.3016C7.85761 42.1857 7.20956 41.1777 7.20953 40.2777ZM19.9528 22.555C19.9527 21.043 19.7727 19.783 19.3766 18.7391L25.4966 18.7388C25.7487 19.2068 25.9647 20.0708 26.1448 21.2948C26.3248 22.4828 26.4328 23.5988 26.4329 24.6068C26.433 27.6308 25.4251 29.9348 24.0932 31.1949C23.4092 31.8069 22.6172 32.2749 21.6812 32.671C19.8092 33.427 18.3693 33.5711 16.6053 33.5712L13.4373 33.5713L13.4374 37.7113L7.67742 37.7115L7.67725 33.5715L2.45725 33.5718L0.872937 25.7958L7.64094 25.7955L7.64066 18.9915L13.4367 21.0793L13.4369 25.7953L16.6409 25.7952C18.8369 25.7951 19.9529 24.715 19.9528 22.555ZM26.4322 8.95634C26.4324 11.9443 25.9285 14.4284 24.8846 16.3724L18.9806 17.1646L18.9086 17.0206C20.4925 14.8246 21.2844 12.4126 21.2843 9.78455C21.2842 8.74055 21.0682 8.23656 20.6362 8.23658C20.3122 8.23659 20.0242 8.5246 19.8443 9.13661L18.7284 12.9167C18.2605 14.4647 17.4685 15.5447 16.3885 16.1568C15.3086 16.7688 14.2286 17.0928 13.1846 17.0929C9.40458 17.093 7.20844 13.7091 7.20823 8.48912C7.20813 5.93313 7.60404 3.77311 8.35997 2.08108L13.616 2.08086C12.788 3.6289 12.3921 5.50091 12.3922 7.69691C12.3923 9.10091 12.6443 9.7849 13.1123 9.78488C13.4363 9.78487 13.6883 9.56886 13.8683 9.10085L15.1281 5.1768C16.1 2.33276 17.9359 0.928687 20.6719 0.928575C24.4519 0.92842 26.432 3.95234 26.4322 8.95634Z" fill="white"/>
+            </svg>
+            </h1>
+            <h2 className="absolute bottom-7 left-7 hidden md:block">
+            <svg width="11" height="161" viewBox="0 0 11 161" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 155.274L8 160.816H6.05727L6.05727 155.53C6.05727 155.315 5.9857 155.213 5.85278 155.213C5.71985 155.213 5.64828 155.315 5.64828 155.53V158.423C5.64828 160.07 5.11659 160.898 4.04297 160.898C3.38858 160.898 2.94891 160.601 2.74442 160.08C2.53992 159.558 2.47857 159.088 2.47857 158.423L2.47857 152.892H4.4213L4.4213 158.168C4.4213 158.382 4.49287 158.495 4.62579 158.495C4.75872 158.495 4.83029 158.382 4.83029 158.168V155.274C4.83029 153.628 5.37221 152.81 6.44582 152.81C7.10021 152.81 7.53988 153.106 7.74438 153.628C7.93865 154.149 8 154.609 8 155.274ZM8 146.271L8 149.226C8 151.547 6.95706 152.712 5.23929 152.712L2.47857 152.712L1.14934 151.076L1.14934 150.054H2.47857L2.47857 146.271L4.4213 146.271L4.4213 150.054H5.23929C5.67895 150.054 6.05727 149.767 6.05727 149.123V146.271H8ZM5.23929 143.408H8V146.067H5.23929C3.52151 146.067 2.47857 144.901 2.47857 142.58L2.47857 140.341H4.4213L4.4213 142.478C4.4213 143.122 4.79962 143.408 5.23929 143.408ZM4.4213 132.564H8V138.188C8 138.853 7.93865 139.313 7.74438 139.834C7.53988 140.356 7.10021 140.652 6.44582 140.652C5.37221 140.652 4.83029 139.834 4.83029 138.188L4.83029 135.223C4.59512 135.223 4.4213 135.407 4.4213 135.734L4.4213 140.243H2.47857L2.47857 135.397C2.47857 133.464 3.26588 132.564 4.4213 132.564ZM6.05727 137.932L6.05727 135.223H5.64828L5.64828 137.932C5.64828 138.147 5.71985 138.249 5.85278 138.249C5.9857 138.249 6.05727 138.147 6.05727 137.932ZM4.4213 131.334L4.4213 132.357H2.47857L2.47857 128.676H6.05727L6.05727 127.653H8L8 132.357H6.05727L6.05727 131.334H4.4213ZM2.06957 131.334H0.331346L0.331346 128.676H2.06957L2.06957 131.334ZM2.47857 124.264L2.47857 119.315H7.58078C9.29856 119.315 10.3517 120.481 10.3517 122.802V127.291H8.409V122.628C8.409 122.188 8.27607 121.974 8 121.974V124.264C8 126.585 6.95706 127.751 5.23929 127.751C4.43152 127.751 3.7669 127.454 3.25566 126.871C2.73419 126.278 2.47857 125.409 2.47857 124.264ZM6.05727 124.162L6.05727 121.974H4.4213L4.4213 124.162C4.3804 125.399 6.09817 125.399 6.05727 124.162ZM4.4213 116.448H8V119.106H0.331346L0.331346 116.448H2.47857L2.47857 114.362C2.47857 112.041 3.52151 110.875 5.23929 110.875H8L8 113.533H5.23929C4.79962 113.533 4.4213 113.82 4.4213 114.464L4.4213 116.448ZM8 104.331V107.286C8 109.607 6.95706 110.773 5.23929 110.773H2.47857L1.14934 109.137L1.14934 108.115H2.47857L2.47857 104.331H4.4213L4.4213 108.115H5.23929C5.67895 108.115 6.05727 107.828 6.05727 107.184L6.05727 104.331H8ZM5.23929 100.86C4.43152 100.86 3.7669 100.563 3.25566 99.9804C2.73419 99.3874 2.47857 98.5183 2.47857 97.3731L2.47857 95.0418C2.47857 93.8966 2.73419 93.0275 3.25566 92.4447C3.7669 91.8517 4.43152 91.5551 5.23929 91.5551C6.95706 91.5551 8 92.7208 8 95.0418V97.3731C8 99.6941 6.95706 100.86 5.23929 100.86ZM4.4213 95.1441L4.4213 97.2708C4.3804 98.5081 6.09817 98.5081 6.05727 97.2708L6.05727 95.1441C6.09817 93.9069 4.3804 93.9069 4.4213 95.1441ZM6.05727 85.9335H2.47857L2.47857 83.275H8L8 88.0193C8 90.3404 6.95706 91.506 5.23929 91.506H2.47857L2.47857 88.8475H5.23929C5.67895 88.8475 6.05727 88.5612 6.05727 87.9171V85.9335ZM8 76.6316L8 79.5866C8 81.9077 6.95706 83.0733 5.23929 83.0733H2.47857L1.14934 81.4373L1.14934 80.4148H2.47857L2.47857 76.6316H4.4213L4.4213 80.4148H5.23929C5.67895 80.4148 6.05727 80.1285 6.05727 79.4844L6.05727 76.6316H8ZM5.23929 73.16C4.43152 73.16 3.7669 72.8634 3.25566 72.2806C2.73419 71.6876 2.47857 70.8185 2.47857 69.6733L2.47857 67.342C2.47857 66.1968 2.73419 65.3277 3.25566 64.7449C3.7669 64.1518 4.43152 63.8553 5.23929 63.8553C6.95706 63.8553 8 65.021 8 67.342L8 69.6733C8 71.9943 6.95706 73.16 5.23929 73.16ZM4.4213 67.4443V69.571C4.3804 70.8082 6.09817 70.8082 6.05727 69.571V67.4443C6.09817 66.207 4.3804 66.207 4.4213 67.4443ZM0.331346 60.2696L0.331346 58.0303H2.06957L2.06957 60.3616C2.06957 60.8626 2.15137 61.0978 2.42745 61.0978H2.47857L2.47857 58.0303H4.4213V61.0978H8V63.7563H3.09206C1.37428 63.7563 0.331346 62.5906 0.331346 60.2696ZM5.24951 47.5554H8V50.4184H5.23929L1.04709 54.764L1.04709 50.9808L2.97959 48.9869L1.04709 46.9931L1.04709 43.2099L5.24951 47.5554ZM4.4213 36.4536H8L8 42.0773C8 42.7419 7.93865 43.202 7.74438 43.7235C7.53988 44.245 7.10021 44.5415 6.44582 44.5415C5.37221 44.5415 4.83029 43.7235 4.83029 42.0773L4.83029 39.1121C4.59512 39.1121 4.4213 39.2961 4.4213 39.6233L4.4213 44.1325H2.47857L2.47857 39.2859C2.47857 37.3534 3.26588 36.4536 4.4213 36.4536ZM6.05727 41.8217L6.05727 39.1121H5.64828L5.64828 41.8217C5.64828 42.0364 5.71985 42.1386 5.85278 42.1386C5.9857 42.1386 6.05727 42.0364 6.05727 41.8217ZM6.21065 33.5877H8V36.2462H0.331346L0.331346 33.5877H4.26792V31.6041C4.26792 30.9599 3.8896 30.6736 3.44993 30.6736H2.47857L2.47857 28.0151H3.44993C4.46219 28.0151 5.19839 28.3935 5.66873 29.1603L8 27.8106V30.9804L6.21065 32.0131V33.5877ZM6.05727 22.2908H2.47857L2.47857 19.6323H8L8 24.3767C8 26.6977 6.95706 27.8634 5.23929 27.8634H2.47857L2.47857 25.2049H5.23929C5.67895 25.2049 6.05727 24.9186 6.05727 24.2744V22.2908ZM8 12.989L8 15.944C8 18.265 6.95706 19.4306 5.23929 19.4306H2.47857L1.14934 17.7947L1.14934 16.7722H2.47857L2.47857 12.989H4.4213L4.4213 16.7722H5.23929C5.67895 16.7722 6.05727 16.4859 6.05727 15.8417L6.05727 12.989H8ZM4.4213 11.7628V12.7853H2.47857L2.47857 9.10432H6.05727L6.05727 8.08184H8V12.7853H6.05727V11.7628H4.4213ZM2.06957 11.7628H0.331346L0.331346 9.10432H2.06957L2.06957 11.7628ZM4.4213 -0.00844031H8V5.61524C8 6.27986 7.93865 6.73998 7.74438 7.26144C7.53988 7.78291 7.10021 8.07943 6.44582 8.07943C5.37221 8.07943 4.83029 7.26144 4.83029 5.61524L4.83029 2.65003C4.59512 2.65003 4.4213 2.83407 4.4213 3.16127L4.4213 7.67044H2.47857L2.47857 2.82385C2.47857 0.891348 3.26588 -0.00844031 4.4213 -0.00844031ZM6.05727 5.35962L6.05727 2.65003H5.64828L5.64828 5.35962C5.64828 5.57434 5.71985 5.67659 5.85278 5.67659C5.9857 5.67659 6.05727 5.57434 6.05727 5.35962Z" fill="white"/>
+            </svg>
+            </h2>
+            <button
+              onClick={toggleLinks}
+              className="group absolute md:top-0 md:left-0 md:w-[70px] md:h-[120px] hover:bg-white transition-all duration-300 ease-in-out md:border-l-0 md:border-b-[2px] top-0 right-0 w-[60px] border-l-[2px] h-[70px] border-white flex flex-col items-center justify-center space-y-[4px]">
+              <div className="w-[8px] h-[8px] group-hover:-translate-y-1 bg-white rounded-full group-hover:bg-black transition-all duration-300 ease-in-out"></div>
+              <div className="w-[8px] h-[8px] bg-white rounded-full group-hover:bg-black transition-all duration-300 ease-in-out"></div>
+              <div className="w-[8px] h-[8px] group-hover:translate-y-1 bg-white rounded-full group-hover:bg-black transition-all duration-300 ease-in-out"></div>
+            </button>
+            <AnimatePresence>
+              {isLinksVisible && (
+                <div className="absolute right-2 top-24 md:left-[90px] md:top-10 flex flex-col gap-8">
+                    <motion.div
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      variants={linkVariants}
+                      className="flex flex-col gap-4"
+                    >
+                     <button onClick={handleAboutButtonClick} className="text-white cursor-pointer text-[36px] galderregular w-[140px] border border-white bg-black bg-opacity-80 rounded-full hover:text-black hover:bg-white transition ease-in-out duration-300"
+                        >О нас
+                        </button>
+                        <button onClick={handleRosterButtonClick} className="text-white cursor-pointer text-[36px] galderregular w-[180px]  border border-white bg-black bg-opacity-80 rounded-full hover:text-black hover:bg-white transition ease-in-out duration-300"
+                        >Команда
+                        </button>
+                        <button onClick={handleFooterButtonClick} className="text-white cursor-pointer text-[36px] galderregular w-[200px]  border border-white bg-black bg-opacity-80 rounded-full hover:text-black hover:bg-white transition ease-in-out duration-300"
+                        >Контакты
+                        </button>       
+                    </motion.div>
           
-          <div className="scroll-section-about backdrop-blur border-l-[2px]">
-            <Ilin />           
-              <div className="flex flex-col gap-6 w-[620px] p-6">
-                <h3 className="galder text-[96px] text-white">О клубе</h3>
-                  <div className="flex flex-col gap-8 helvetica text-white text-[18px] tracking-widest">
+                </div>
+              )}
+            </AnimatePresence>
+          
+            </header>
+        </div>
+        <div ref={MainRef} className="md:overflow-hidden main overflow-auto flex absolute h-screen flex-col md:flex-row">
+          <section id="main" className="relative w-screen h-screen hidden md:block">
+          <Canvas id="Background" style={{ zIndex: -10, backgroundColor: '#003C47', touchAction: 'none' }} onMouseMove={handleMouseMove} gl={{ preserveDrawingBuffer: true }} shadows dpr={[1, 1.5]} camera={{ position: [0, 0, 9], fov: 50 , zoom: 1 }} onWheel={e => e.preventDefault()}>
+        <ambientLight intensity={2} />
+        <pointLight position={[0, 10, 10]} color="#fff" intensity={1} />
+        <Environment preset="city" />
+        <Logo mousePosition={mousePosition} rotation={[0.3, Math.PI / 1.6, 0]} /> 
+        </Canvas>
+          </section>
+          
+          <section className="relative about flex flex-col md:flex-row xl:items-start pt-36 md:pt-0 px-0 md:px-10 backdrop-blur bg-[#002026] border-l-0 border-b-2 md:border-b-0 md:border-l-2">
+            <div id="about" className="absolute z-20 bg-opacity-0 bg-black top-0 w-[450px] h-[650px] pointer-events-auto"></div>
+            <Ilin /> 
+              <div className="flex flex-col gap-6 p-6">
+                <h3 className="galder text-[56px] md:text-[96px] text-white">О клубе</h3>
+                  <div className="flex flex-col w-[350px] md:w-[550px] gap-8 galderbold text-white text-[12px] md:text-[17px] tracking-widest">
                     <p>Проект ILIN Esports был запущен в 2022 году с целью создать одну из первых полностью профессиональных киберспортивных команд из Якутии. Цель организации — соревноваться как на местной, так и на международной киберспортивной арене.</p>
                     <p>В конце 2022 года CEO ILIN Esports, Олег Кимович собрал перспективных игроков по дисциплине Counter-Strike из Якутии в одну команду и перевез ребят на буткемп в Санкт-петербург для лучших результатов. Спустя пару месяцев, после адаптации к жизни в новом городе, команда набралась опыта, и начала показывать хорошую игру на профессиональной арене европейского масштаба.</p>
                     <p>ILIN Esports работает с талантами, развивает их игровой и личностный профиль, привносит элементы профессиональной организации, чтобы игроки имели наилучшие условия и помогали команде подняться на вершину. Более подробную информацию о ILIN Esports можно найти здесь, на сайте и в социальных сетях команды.</p>
                   </div>
               </div>
-          </div>
-          <div className="scroll-section-roster backdrop-blur border-l-[2px]">
-            <div className="p-6">
-              <h3 className="galder text-[96px] text-white">Состав по Counter-Strike</h3>
-                <div className="p-16">
+          </section>
+
+          <section id="roster" className="relative footer flex flex-col px-0 md:px-10 md:flex-row xl:items-start pointer-events-auto backdrop-blur bg-[#002026]  border-l-0 border-b-2 md:border-b-0 md:border-l-2">   
+            <div className="overflow-x-scroll lg:overflow-x-hidden pointer-events-auto max-lg:w-[100vw]">
+            <h3 className="p-6 galder text-[56px] md:text-[96px] text-white fixed md:static">Состав по Counter-Strike</h3>
+                <div className="p-16 w-[1850px] mt-16 md:mt-0 ">
                   <Roster />
                 </div>
             </div>
-          </div>
+          </section>
 
-          <div className="scroll-section border-l-[2px] border-white backdrop-blur">          
-            <div className="flex flex-col pl-6 w-[550px] gap-8 helvetica text-white text-[18px] tracking-widest">
-              <h3 className="galder text-[96px] text-white">Новости</h3>
-                <p>Здесь вы всегда найдете самую актуальную информацию о наших предстоящих матчах, достижениях и важных событиях. </p>
+          <section id="footer" className="relative footer px-0 md:px-10 pointer-events-auto xl:items-start flex flex-col md:flex-row md:border-x-2 border-white backdrop-blur bg-[#002026] ">          
+            <div className="flex flex-col pl-6 md:pl-12 p-6 w-[350px] md:w-[550px] gap-8 galderbold text-white text-[17px]">
+              <h3 className="galder text-[56px] md:text-[96px] text-white">Новости</h3>
+                <p><a className="underline cursor-pointer hover:text-[#003C47] ease-in-out transition duration-300" href="https://vk.com/ilincs">Здесь</a> вы всегда найдете самую актуальную информацию о наших предстоящих матчах, достижениях и важных событиях. </p>
                 <p>Мы стараемся держать вас в курсе всех значимых моментов в жизни нашей команды.</p>
             </div>
-            <div className="flex pl-6 flex-col w-[550px] gap-8 helvetica text-white text-[18px] tracking-widest">
-              <h3 className="galder text-[96px] text-white">Сообщество</h3>
+            <div className="flex flex-col pl-6 md:pl-12 p-6 w-[350px] md:w-[550px] gap-8 galderbold text-white text-[17px] ">
+              <h3 className="galder text-[56px] md:text-[96px] text-white">Сообщество</h3>
                 <p>Присоединяйтесь к нашему сообществу в VK. Мы активно ведем нашу группу в VK, где вы можете найти эксклюзивный контент, опросы и обсуждения.</p>
                 <p>Присоединяйтесь к нам! Чтобы быть в курсе всех событий и общаться с другими фанатами.</p>
                 <p>Следите за обновлениями, и до встречи на матчах!</p>
-                  <a href=""></a>
+                  <a className="underline border-white border rounded-md cursor-pointer flex w-[180px] bg-black bg-opacity-50 gap-4 items-center hover:text-[#003C47] ease-in-out transition duration-300" href="https://vk.com/ilincs">
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg">
+                  <g clip-path="url(#clip0_248_98)">
+                  <path d="M4.33213 0C1.93213 0 0 1.93213 0 4.33213V35.6679C0 38.0679 1.93213 40 4.33213 40H35.6679C38.0679 40 40 38.0679 40 35.6679V4.33213C40 1.93213 38.0679 0 35.6679 0H4.33213ZM21.1101 10.6408C21.4744 10.6391 21.948 10.704 22.2473 10.9115C22.468 11.0646 22.7582 11.2417 22.7617 11.9314C22.7734 14.1878 22.7461 16.1533 22.7798 18.4567C22.8238 18.9361 23.1353 19.135 23.4296 19.1336C23.7239 19.1321 24.0616 18.9481 24.3141 18.7004C25.6815 17.3579 27.2568 14.129 28.222 12.0126C28.5822 11.2228 29.1635 11.2735 29.8195 11.2726C32.0157 11.2693 32.9051 11.2971 34.9639 11.3087C35.3409 11.3107 35.6695 11.6292 35.7762 11.8592C35.8683 12.0579 35.9344 12.6333 35.4332 13.4477C33.8915 15.9529 32.4741 17.9703 30.7581 20.352C30.6499 20.5022 30.547 20.6813 30.5505 20.8664C30.5537 21.0357 30.6415 21.204 30.7581 21.3267C32.2881 22.9362 33.8851 24.5557 35.4513 26.3267C35.9127 26.8485 35.623 27.6535 35.4964 27.8791C35.4005 28.0499 34.9673 28.4904 34.6751 28.4928C33.6108 28.5013 33.6081 28.4928 29.1516 28.4928C28.4917 28.4928 28.2282 28.3 27.8791 27.9332C26.3339 26.3099 26.5243 26.506 24.8285 24.6931C24.6082 24.4576 24.1716 24.1617 23.7545 24.3502C23.4005 24.5102 22.7527 24.7463 22.7527 25.3971C22.7527 26.0914 22.7527 26.983 22.7527 27.6715C22.7527 28.0845 22.1045 28.3935 21.7148 28.3935C20.7948 28.3935 20.0605 28.3935 18.6823 28.3935C17.2547 28.3935 16.019 28.0493 15.3339 27.7166C12.3826 26.2835 10.628 24.2875 8.70939 20.9657C7.07109 18.1292 5.64552 15.3365 4.24188 12.4097C4.08506 12.0828 3.97363 11.3628 5.1444 11.3628C6.3813 11.3628 7.54127 11.3358 9.42238 11.3358C9.97461 11.3358 10.3181 11.4469 10.5505 11.6155C10.783 11.7841 10.8973 12.0089 11.0108 12.2202C13.3511 16.578 13.3565 16.8447 15.0271 19.0072C15.1839 19.2103 15.4101 19.241 15.5776 19.2419C15.7846 19.243 15.9761 19.2094 16.1372 19.0794C16.4754 18.8066 16.5704 18.5143 16.5704 18.0957C16.5704 16.6287 16.5704 15.5327 16.5704 13.6913C16.5704 13.1863 16.2283 12.4377 15.8484 12.2022C15.4548 11.9756 14.8078 11.7511 14.8285 11.4711C14.8512 11.1649 15.5638 10.6498 16.8321 10.6498C18.3485 10.6498 19.4233 10.6486 21.1101 10.6408Z" fill="white"/>
+                  </g>
+                  <defs>
+                  <clipPath id="clip0_248_98">
+                  <rect width="40" height="40" fill="white"/>
+                  </clipPath>z
+                  </defs>
+                  </svg> @IlinEsports</a>
             </div>
-
-          </div>
+            <div className="flex flex-col pl-6 md:pl-12 p-6 w-[350px] md:w-[550px] gap-2 galderbold text-white text-[17px]">
+              <h3 className="galder text-[56px] md:text-[96px] text-white">Связь</h3>
+                <span className="galder text-[64px] text-white">Олег Кимович</span>
+                <a href="https://t.me/@prontoleg" target="_blank" rel="noopener noreferrer" class="border border-white bg-black bg-opacity-50 w-[200px] rounded-md flex justify-center cursor-pointer underline hover:text-[#003C47] ease-in-out transition duration-300">Telegram
+                @prontoleg</a>
+            </div>
+          </section>
         </div>
       </div>
-    </section>
   );
 }
 
+
 export default ScrollSection;
+

@@ -233,9 +233,19 @@ const WaveText = () => {
 };
 
 export function Ilin() {
+  const canvasStyles = {
+    width: '945px',
+    height: '945px',
+  };
+  
+  if (window.innerWidth <= 768) {
+    canvasStyles.width = '460px';
+    canvasStyles.height = '550px';
+  }
+  
   return (
     <div>
-      <Canvas style={{ width: 945, height: 945 }}>
+      <Canvas style={canvasStyles}>
         <ambientLight />
         <pointLight position={[10, 10, 10]} />
         <WaveText />
